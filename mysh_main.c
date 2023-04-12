@@ -9,6 +9,7 @@
 #define PERMS 0644  // set access permissions
 
 char *commandParser(char *, char **, int *);
+int checkSpecialChars(char *);
 
 int main()
 {
@@ -16,7 +17,7 @@ int main()
 
     while (1)
     {
-        int status, fd = -1;
+        int status, fd = -1;      // fd = file descriptor for potentially opening a file
         char command[LENGTH], ch; // input can be at most 100 chars
         printf("in-mysh-now:>");
 
@@ -79,45 +80,101 @@ int main()
 
 char *commandParser(char *cmd, char **cmdParsed, int *filedesc)
 {
-    // char cmdParsed[strlen(cmd)+1][strlen(cmd)+1];
     char delim[] = " ";
     char *word;
-    // int createFile = 0; // int variable 1 or 0 to know if we need to open a file
 
     word = strtok(cmd, delim);
     int counter = 0;
     while (word != NULL)
     {
-        if (strcmp(word, ">") == 0)
+        if (strcmp(word, ">") == 0)     // stdout redirection
         {
             word = strtok(NULL, delim);
-            while (word != NULL)
+            if (word == NULL)
             {
-                // printf("in while loop \n");
-                if ((*filedesc = open(word, O_CREAT | O_RDWR, PERMS)) == -1)
-                {
-                    perror("creating");
-                }
-                dup2(*filedesc, 1);
-                dup2(*filedesc, 2);
-                word = strtok(NULL, delim);
+                strcpy(cmdParsed[counter], ">");
+                counter++;
+                break;
             }
-            //cmdParsed[counter] = NULL;
-            //printf("returning \n");
-            //return *cmdParsed;
-
-            break;
+            // while (word != NULL)
+            // {
+            if ((*filedesc = open(word, O_CREAT | O_RDWR | O_TRUNC, PERMS)) == -1)
+            {
+                perror("creating");
+            }
+            dup2(*filedesc, 1);
+            // dup2(*filedesc, 2);
+            word = strtok(NULL, delim);
+            //}
+            if (word == NULL)
+            {
+                break;
+            }
         }
-        //printf("1 \n");
+        
+        if(strcmp(word, "<") == 0) {   //stdin redirection
+            word = strtok(NULL, delim);
+            if (word == NULL)
+            {
+                strcpy(cmdParsed[counter], ">");
+                counter++;
+                break;
+            }
+            if ((*filedesc = open(word, O_RDONLY, PERMS)) == -1)
+            {
+                perror("creating");
+            }
+            dup2(*filedesc, 0);
+            word = strtok(NULL, delim);
+            if (word == NULL)
+            {
+                break;
+            }
+        }
+        
+        if (strcmp(word, ">>") == 0)   //append to end of file
+        {
+            word = strtok(NULL, delim);
+            if (word == NULL)
+            {
+                strcpy(cmdParsed[counter], ">>");
+                counter++;
+                break;
+            }
+            if ((*filedesc = open(word, O_CREAT | O_APPEND | O_RDWR, PERMS)) == -1)
+            {
+                perror("creating");
+            }
+            dup2(*filedesc, 1);
+            word = strtok(NULL, delim);
+            if (word == NULL)
+            {
+                break;
+            }
+        }
+        if (checkSpecialChars(word)){
+            continue;
+        }
+        // printf("1 \n");
         strcpy(cmdParsed[counter], word);
         word = strtok(NULL, delim);
-        //printf("%s  \n", word);
+        // printf("%s  \n", word);
 
         counter++;
     }
 
     cmdParsed[counter] = NULL;
-    //printf("%s %s\n", cmdParsed[0], cmdParsed[1]);
+    // printf("%s %s\n", cmdParsed[0], cmdParsed[1]);
 
     return *cmdParsed;
+}
+
+int checkSpecialChars(char *wd){
+    char* spChars[] = {">","<",">>"};
+    for (int i=0;i<3;i++) {
+        if(strcmp(wd,spChars[i])==0){
+            return 1;
+        }
+    }
+    return 0;
 }
