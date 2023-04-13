@@ -10,20 +10,30 @@
 #define LENGTH 1024 // max length of command
 #define PERMS 0644  // set access permissions
 
-// char *commandParser(char *, char **, int *, int *);
-// int checkSpecialChars(char *);
+void add_alias(char ***, int *, int *, char *);
 
 int main()
 {
     pid_t pid;
+    int aliases = 2;    // int array alaises with 2 rows
+    int current_al = 0; // current aliases
+    
+    /*
+    save aliases in 2 continous rows
+    for Example :
+         createalias myhome “cd /home/users/smith”
+         alias[0] == myhome and alias[1] == cd /home/users/smith
+    */
+
+    char **alias = malloc(sizeof(char *) * 2); // init with 2 rows
 
     while (1)
-    {   
+    {
         /*
           fd = file descriptor for potentially opening a file
           p = 1 if a pipe found in command
         */
-        int status, fd = -1, p=0;      
+        int status, fd = -1, p = 0;
         char command[LENGTH], ch; // input can be at most 100 chars
         printf("in-mysh-now:>");
 
@@ -36,6 +46,31 @@ int main()
             ch = getchar();
         }
         command[i] = '\0';
+
+        char check_al[12] = "";
+        strncat(check_al, command, 11);
+
+        // printf("check -> %s \n", check_al);
+        if (strcmp(check_al, "createalias") == 0)
+        { // handle create alias
+            char delim[] = " \"";
+            char *word;
+            char temp[LENGTH] = "";
+            word = strtok(command, delim);
+            word = strtok(NULL, delim);
+            add_alias(&alias, &aliases, &current_al, word);
+
+            word = strtok(NULL, delim);
+            while (word != NULL)
+            {
+                strcat(temp, word);
+                strcat(temp, " ");
+                word = strtok(NULL, delim);
+            }
+            add_alias(&alias, &aliases, &current_al, temp);
+            printf("alias -> %s %s", alias[0], alias[1]);
+            continue;
+        }
         if (strcmp(command, "exit") == 0)
         {
             return 1;
@@ -59,9 +94,10 @@ int main()
         // printf("%s %s\n", parsedCmd[0], parsedCmd[1]);
 
         if (pid == 0)
-        {                                                        // child process
+        {                                                            // child process
             *parsedCmd = commandParser(command, parsedCmd, &fd, &p); // parse command
-            if(p == 1){
+            if (p == 1)
+            {
                 exit(1);
             }
             execvp(parsedCmd[0], parsedCmd);
@@ -87,6 +123,20 @@ int main()
             close(fd);
         }
     }
+}
+
+void add_alias(char ***als, int *alias_malloced, int *alias_currrent, char *word1)
+{
+    if (*alias_currrent >= *alias_malloced)
+    {
+        *als = realloc(*als, sizeof(char *) * (*alias_malloced + 2));
+        *alias_malloced += 2;
+    }
+
+    char *new_add = malloc(sizeof(char) * strlen(word1) + 1);
+    strcpy(new_add, word1);
+    (*als)[*alias_currrent] = new_add;
+    (*alias_currrent)++;
 }
 
 // char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
@@ -167,7 +217,7 @@ int main()
 
 //         if (strcmp(word, "|") == 0) {      //execute pipe
 //             *p=1;
-            
+
 //             //counter++;
 //             cmdParsed[counter] = NULL;
 
@@ -191,7 +241,6 @@ int main()
 //             *cmd1 = commandParser(word,cmd1,filedesc,p);
 //             printf("%s  %s\n",cmd1[0],cmd1[1]);
 //             printf("%s  %s\n",cmdParsed[0],cmdParsed[1]);
-
 
 //             int fds[2]; // file desc to open Pipe
 //             pipe(fds);

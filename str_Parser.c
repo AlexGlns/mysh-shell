@@ -12,7 +12,7 @@
 
 char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
 {
-    char delim[] = " ";
+    char delim[] = " \"";
     char *word;
 
     word = strtok(cmd, delim);
