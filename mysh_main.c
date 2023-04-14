@@ -18,6 +18,13 @@ int main()
     int aliases = 2;    // int array alaises with 2 rows
     int current_al = 0; // current aliases
 
+    char myHistory[20][LENGTH]; // array to store last 20 commands
+
+    // initialize myHistory array
+    for (int i = 0; i < 20; i++)
+    {
+        strcpy(myHistory[i], "");
+    }
     /*
     save aliases in 2 continous rows
     for Example :
@@ -47,7 +54,48 @@ int main()
         }
         command[i] = '\0';
 
-        char check_al[12] = "";         //check createalias command
+        int history = atoi(command);
+        if (history!=0) {
+            strcpy(command,myHistory[history - 1]);
+        }
+
+        // store command to myHistory
+        for (int i = 0; i < 20; i++)
+        {
+            if (strcmp(myHistory[i], "") == 0)
+            {
+                strcpy(myHistory[i], command);
+                break;
+            }
+
+            if (i == 19)
+            {
+                for (int i = 1; i < 20; i++)
+                {
+                    strcpy(myHistory[i - 1], myHistory[i]);
+                }
+                strcpy(myHistory[19], command);
+            }
+        }
+
+        // print myHistory output
+        if (strcmp(command, "myHistory") == 0)
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                if (strcmp(myHistory[i], "") != 0)
+                {
+                    printf("%d %s \n", i + 1, myHistory[i]);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            continue;
+        }
+
+        char check_al[12] = ""; // check createalias command
         strncat(check_al, command, 11);
 
         if (strcmp(check_al, "createalias") == 0) // handle create alias
@@ -70,20 +118,24 @@ int main()
             continue;
         }
 
-        char check_destalias[13] = "";      // check destroy alias command
+        char check_destalias[13] = ""; // check destroy alias command
         strncat(check_destalias, command, 12);
 
-        if (strcmp(check_destalias,"destroyalias") == 0){
+        if (strcmp(check_destalias, "destroyalias") == 0)
+        {
             char delim[] = " \"";
             char *word;
             char temp[LENGTH] = "";
             word = strtok(command, delim);
-            word = strtok(NULL, delim);        // find alias command you want to destroy
-            for (int i=0; i<aliases; i+=2){
-                if(alias[i]!=NULL) {
-                    if (strcmp(word,alias[i]) == 0){
+            word = strtok(NULL, delim); // find alias command you want to destroy
+            for (int i = 0; i < aliases; i += 2)
+            {
+                if (alias[i] != NULL)
+                {
+                    if (strcmp(word, alias[i]) == 0)
+                    {
                         alias[i] = NULL;
-                        alias[i+1] = NULL;
+                        alias[i + 1] = NULL;
                     }
                 }
             }
@@ -95,7 +147,7 @@ int main()
             return 1;
         }
 
-        for (int i = 0; i < aliases; i += 2)        //check if command is an alias
+        for (int i = 0; i < aliases; i += 2) // check if command is an alias
         {
             if (alias[i] != NULL)
             {
@@ -169,161 +221,3 @@ void add_alias(char ***als, int *alias_malloced, int *alias_currrent, char *word
     (*als)[*alias_currrent] = new_add;
     (*alias_currrent)++;
 }
-
-// char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
-// {
-//     char delim[] = " ";
-//     char *word;
-
-//     word = strtok(cmd, delim);
-//     int counter = 0;
-//     while (word != NULL)
-//     {
-//         if (strcmp(word, ">") == 0) // stdout redirection
-//         {
-//             word = strtok(NULL, delim);
-//             if (word == NULL)
-//             {
-//                 strcpy(cmdParsed[counter], ">");
-//                 counter++;
-//                 break;
-//             }
-//             // while (word != NULL)
-//             // {
-//             if ((*filedesc = open(word, O_CREAT | O_RDWR | O_TRUNC, PERMS)) == -1)
-//             {
-//                 perror("creating");
-//             }
-//             dup2(*filedesc, 1);
-
-//             word = strtok(NULL, delim);
-//             //}
-//             if (word == NULL)
-//             {
-//                 break;
-//             }
-//         }
-
-//         if (strcmp(word, "<") == 0)
-//         { // stdin redirection
-//             word = strtok(NULL, delim);
-//             if (word == NULL)
-//             {
-//                 strcpy(cmdParsed[counter], ">");
-//                 counter++;
-//                 break;
-//             }
-//             if ((*filedesc = open(word, O_RDONLY, PERMS)) == -1)
-//             {
-//                 perror("creating");
-//             }
-//             dup2(*filedesc, 0);
-//             word = strtok(NULL, delim);
-//             if (word == NULL)
-//             {
-//                 break;
-//             }
-//         }
-
-//         if (strcmp(word, ">>") == 0) // append to end of file
-//         {
-//             word = strtok(NULL, delim);
-//             if (word == NULL)
-//             {
-//                 strcpy(cmdParsed[counter], ">>");
-//                 counter++;
-//                 break;
-//             }
-//             if ((*filedesc = open(word, O_CREAT | O_APPEND | O_RDWR, PERMS)) == -1)
-//             {
-//                 perror("creating");
-//             }
-//             dup2(*filedesc, 1);
-//             word = strtok(NULL, delim);
-//             if (word == NULL)
-//             {
-//                 break;
-//             }
-//         }
-
-//         if (strcmp(word, "|") == 0) {      //execute pipe
-//             *p=1;
-
-//             //counter++;
-//             cmdParsed[counter] = NULL;
-
-//             word = strtok(NULL, delim);
-//             if (word == NULL) {
-//                 strcpy(cmdParsed[counter], "|");
-//                 counter++;
-//                 break;
-//             }
-//             //store second command
-//             char* cmd1[strlen(cmd)+1];
-//             //int counter1 =0;
-
-//             // find command write of pipe
-//             // while (word != NULL)
-//             // {
-//             //     strcpy(cmd1[counter], word);
-//             //     word = strtok(NULL, delim);
-//             //     counter1++;
-//             // }
-//             *cmd1 = commandParser(word,cmd1,filedesc,p);
-//             printf("%s  %s\n",cmd1[0],cmd1[1]);
-//             printf("%s  %s\n",cmdParsed[0],cmdParsed[1]);
-
-//             int fds[2]; // file desc to open Pipe
-//             pipe(fds);
-//             pid_t pid = fork();
-//             if (pid == -1){
-//                 perror("fork");
-//             }
-
-//             if (pid == 0){  //child execute command after pipe
-//                 close(fds[WRITE]);
-//                 dup2(fds[READ],0);
-//                 execvp(cmd1[0],cmd1);
-//                 perror("exec1");
-//                 //return -1;
-//             }else{
-//                 close(fds[READ]);
-//                 dup2(fds[WRITE],1);
-//                 execvp(cmdParsed[0],cmdParsed);
-//                 perror("exec2");
-//                 //return -1;
-//             }
-
-//             break;
-//         }
-
-//         if (checkSpecialChars(word))
-//         {
-//             continue;
-//         }
-//         // printf("1 \n");
-//         strcpy(cmdParsed[counter], word);
-//         word = strtok(NULL, delim);
-//         // printf("%s  \n", word);
-
-//         counter++;
-//     }
-
-//     cmdParsed[counter] = NULL;
-//     // printf("%s %s\n", cmdParsed[0], cmdParsed[1]);
-
-//     return *cmdParsed;
-// }
-
-// int checkSpecialChars(char *wd)
-// {
-//     char *spChars[] = {">", "<", ">>"};
-//     for (int i = 0; i < 3; i++)
-//     {
-//         if (strcmp(wd, spChars[i]) == 0)
-//         {
-//             return 1;
-//         }
-//     }
-//     return 0;
-// }
