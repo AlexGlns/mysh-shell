@@ -17,7 +17,7 @@ int main()
     pid_t pid;
     int aliases = 2;    // int array alaises with 2 rows
     int current_al = 0; // current aliases
-    
+
     /*
     save aliases in 2 continous rows
     for Example :
@@ -47,12 +47,11 @@ int main()
         }
         command[i] = '\0';
 
-        char check_al[12] = "";
+        char check_al[12] = "";         //check createalias command
         strncat(check_al, command, 11);
 
-        // printf("check -> %s \n", check_al);
-        if (strcmp(check_al, "createalias") == 0)
-        { // handle create alias
+        if (strcmp(check_al, "createalias") == 0) // handle create alias
+        {
             char delim[] = " \"";
             char *word;
             char temp[LENGTH] = "";
@@ -68,12 +67,44 @@ int main()
                 word = strtok(NULL, delim);
             }
             add_alias(&alias, &aliases, &current_al, temp);
-            printf("alias -> %s %s", alias[0], alias[1]);
             continue;
         }
-        if (strcmp(command, "exit") == 0)
+
+        char check_destalias[13] = "";      // check destroy alias command
+        strncat(check_destalias, command, 12);
+
+        if (strcmp(check_destalias,"destroyalias") == 0){
+            char delim[] = " \"";
+            char *word;
+            char temp[LENGTH] = "";
+            word = strtok(command, delim);
+            word = strtok(NULL, delim);        // find alias command you want to destroy
+            for (int i=0; i<aliases; i+=2){
+                if(alias[i]!=NULL) {
+                    if (strcmp(word,alias[i]) == 0){
+                        alias[i] = NULL;
+                        alias[i+1] = NULL;
+                    }
+                }
+            }
+            continue;
+        }
+
+        if (strcmp(command, "exit") == 0) // exit shell commnad
         {
             return 1;
+        }
+
+        for (int i = 0; i < aliases; i += 2)        //check if command is an alias
+        {
+            if (alias[i] != NULL)
+            {
+                if (strcmp(command, alias[i]) == 0)
+                {                                  // alias command found
+                    strcpy(command, alias[i + 1]); // change command to the aliased one
+                    break;
+                }
+            }
         }
 
         pid = fork();
