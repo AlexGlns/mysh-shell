@@ -4,6 +4,8 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <string.h>
+#include <signal.h>
+#include <sys/wait.h>
 #include "str_Parser.h"
 #define READ 0      // read end for read
 #define WRITE 1     // write end for pipe
@@ -11,6 +13,12 @@
 #define PERMS 0644  // set access permissions
 
 void add_alias(char ***, int *, int *, char *);
+void sig_handler_terminate();
+void sig_handler_stop();
+
+int isChild = 0;
+int next = 0;
+
 
 int main()
 {
@@ -34,6 +42,22 @@ int main()
 
     char **alias = malloc(sizeof(char *) * 2); // init with 2 rows
 
+    /*
+        act_int is for control-c handling
+        act_stp is for control-z handling
+    */
+    static struct sigaction act_int , act_stp;
+
+    act_int.sa_handler = sig_handler_terminate;
+    act_stp.sa_handler = sig_handler_stop;
+    
+    sigemptyset(&(act_int.sa_mask));
+    sigemptyset(&(act_stp.sa_mask));
+
+    sigaction(SIGINT, &act_int, NULL);      // control - c
+    sigaction(SIGTSTP, &act_stp, NULL);     // control - z
+
+
     while (1)
     {
         /*
@@ -53,10 +77,12 @@ int main()
             ch = getchar();
         }
         command[i] = '\0';
+        //printf("%s \n", command);
 
         int history = atoi(command);
-        if (history!=0) {
-            strcpy(command,myHistory[history - 1]);
+        if (history != 0)
+        {
+            strcpy(command, myHistory[history - 1]);
         }
 
         // store command to myHistory
@@ -176,8 +202,9 @@ int main()
         //*parsedCmd = commandParser(command, parsedCmd, &fd);
         // printf("%s %s\n", parsedCmd[0], parsedCmd[1]);
 
-        if (pid == 0)
-        {                                                            // child process
+        if (pid == 0) // is child
+        {
+            isChild = 1;
             *parsedCmd = commandParser(command, parsedCmd, &fd, &p); // parse command
             if (p == 1)
             {
@@ -187,9 +214,11 @@ int main()
             perror("execvp");
             exit(1);
         }
-        else
-        { // parent process is mysh shell
-            wait(&status);
+        else // parent process is mysh shell
+        { 
+
+            while (waitpid (pid , &status , WNOHANG | WUNTRACED) == 0);
+            
         }
 
         // free parsedStr
@@ -220,4 +249,25 @@ void add_alias(char ***als, int *alias_malloced, int *alias_currrent, char *word
     strcpy(new_add, word1);
     (*als)[*alias_currrent] = new_add;
     (*alias_currrent)++;
+}
+
+void sig_handler_terminate()
+{
+    if (isChild == 1)
+    {
+        isChild = 0;
+        exit(2);
+    }
+
+    printf("\n");
+}
+
+void sig_handler_stop() {
+    if (isChild == 1)
+    {   
+        next = 1;
+        isChild = 0;
+        kill(getpid() , SIGSTOP);
+    }
+    printf("\n");
 }
