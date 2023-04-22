@@ -216,8 +216,11 @@ int main()
         }
         else // parent process is mysh shell
         { 
-
-            while (waitpid (pid , &status , WNOHANG | WUNTRACED) == 0);
+            if (command[strlen(command) - 1] != '&') {
+                while (waitpid (-1 , &status , WNOHANG | WUNTRACED) == 0);
+            } else {
+               printf("\n");
+            }
             
         }
 

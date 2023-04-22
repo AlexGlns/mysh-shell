@@ -4,14 +4,19 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <string.h>
+#include <glob.h>
 #include "str_Parser.h"
 
 #define READ 0      // read end for read
 #define WRITE 1     // write end for pipe
 #define PERMS 0644  // set access permissions
 
+char ** wildchar(glob_t *, char* );
+
 char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
 {
+    glob_t gstruct;
+    char **wildch;
     char delim[] = " \"";
     char *word;
 
@@ -19,6 +24,29 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
     int counter = 0;
     while (word != NULL)
     {
+        char tmp;
+        int j=0, wdchar = 0;    //wdchar == 1 if wildcharachter found
+        while (word[j]!='\0'){
+            if (word[j] == '*'){  //if you find a wild char call function wildchar
+               wildch = wildchar(&gstruct, word);
+               wdchar = 1;
+               if (wildch != NULL) {
+                while(*wildch) {
+                    strcpy(cmdParsed[counter], *wildch);
+                    wildch++;
+                    counter++;
+                }
+               }
+               break;       
+            }
+            j++;
+        }
+
+        if (wdchar == 1) {
+            word = strtok(NULL, delim);
+            continue;
+        }
+
         if (strcmp(word, ">") == 0) // stdout redirection
         {
             word = strtok(NULL, delim);
@@ -142,6 +170,11 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
         {
             continue;
         }
+
+        if (strcmp(word,"&") == 0) {
+            word = strtok(NULL, delim);
+            continue;
+        }
         // printf("1 \n");
         strcpy(cmdParsed[counter], word);
         word = strtok(NULL, delim);
@@ -151,7 +184,7 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
     }
 
     cmdParsed[counter] = NULL;
-    // printf("%s %s\n", cmdParsed[0], cmdParsed[1]);
+    //printf("%s %s\n", cmdParsed[0], cmdParsed[1]);
 
     return *cmdParsed;
 }
@@ -167,4 +200,16 @@ int checkSpecialChars(char *wd)
         }
     }
     return 0;
+}
+
+char ** wildchar(glob_t *gstruct, char* wd) {
+    int r;
+
+    r = glob(wd, GLOB_ERR, NULL, gstruct);
+
+    if (r==0) {
+        return gstruct->gl_pathv;
+    }
+
+    return NULL;
 }
