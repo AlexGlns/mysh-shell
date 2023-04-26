@@ -65,7 +65,7 @@ int main()
           p = 1 if a pipe found in command
         */
         int status, fd = -1, p = 0;
-        char command[LENGTH], ch; // input can be at most 100 chars
+        char command[LENGTH], ch; // input can be at most 1024 chars
         printf("in-mysh-now:>");
 
         ch = getchar(); // read input character by character
@@ -77,10 +77,29 @@ int main()
             ch = getchar();
         }
         command[i] = '\0';
-        //printf("%s \n", command);
+        
+        int history = 0;
+        char history_num[3];            //store number of command to execute from myHistory
+        
+        if (command[0] == '!'){         //check if you have to execute command from myHistory
+            int j = 1;
+            int k =0;
+            while (command[j] != '\0'){
+                if (strlen(command) > 3) {      //if command has more than 3 chars break and do nothing (for example !111)
+                    break;
+                }
+                history_num[k] = command[j];
+                j++;
+                k++;
+                if (k == 2) {               
+                    break;
+                }
+            }
+            history_num[k] = '\0';
+            history = atoi(history_num);        //store num of command to execute from myHistory Array
+        }
 
-        int history = atoi(command);
-        if (history != 0)
+        if (history > 0 && history <= 20)       //command to execute from myHistory [1,20]
         {
             strcpy(command, myHistory[history - 1]);
         }
@@ -94,13 +113,13 @@ int main()
                 break;
             }
 
-            if (i == 19)
+            if (i == 19)      //if Array is full
             {
-                for (int i = 1; i < 20; i++)
+                for (int i = 1; i < 20; i++)    //go each element one posistion back
                 {
                     strcpy(myHistory[i - 1], myHistory[i]);
                 }
-                strcpy(myHistory[19], command);
+                strcpy(myHistory[19], command); //store new command to last position of array
             }
         }
 

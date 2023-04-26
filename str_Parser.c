@@ -163,6 +163,7 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
                 //return -1;
             }
 
+
             break;
         }
 
