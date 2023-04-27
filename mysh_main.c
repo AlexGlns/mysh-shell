@@ -219,7 +219,6 @@ int main()
             parsedCmd[j] = malloc(sizeof(char) * strlen(command) + 1);
         }
         //*parsedCmd = commandParser(command, parsedCmd, &fd);
-        // printf("%s %s\n", parsedCmd[0], parsedCmd[1]);
 
         if (pid == 0) // is child
         {
@@ -227,6 +226,7 @@ int main()
             *parsedCmd = commandParser(command, parsedCmd, &fd, &p); // parse command
             if (p == 1)
             {
+                printf("\n");
                 exit(1);
             }
             execvp(parsedCmd[0], parsedCmd);
@@ -235,7 +235,7 @@ int main()
         }
         else // parent process is mysh shell
         { 
-            if (command[strlen(command) - 1] != '&') {
+            if (command[strlen(command) - 1] != '&') {                  // if last char of command is '&' don't wait to end
                 while (waitpid (-1 , &status , WNOHANG | WUNTRACED) == 0);
             } else {
                printf("\n");

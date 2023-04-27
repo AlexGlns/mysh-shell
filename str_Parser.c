@@ -56,8 +56,7 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
                 counter++;
                 break;
             }
-            // while (word != NULL)
-            // {
+
             if ((*filedesc = open(word, O_CREAT | O_RDWR | O_TRUNC, PERMS)) == -1)
             {
                 perror("creating");
@@ -65,7 +64,7 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
             dup2(*filedesc, 1);
 
             word = strtok(NULL, delim);
-            //}
+            
             if (word == NULL)
             {
                 break;
@@ -127,23 +126,39 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
                 break;
             }
             //store second command
-            char* cmd1[strlen(cmd)+1];
+            char nextCmd[1024];
+            char** cmd1 = NULL;
+
+
             //int counter1 =0;
 
             // find command write of pipe
-            // while (word != NULL)
-            // {
-            //     strcpy(cmd1[counter], word);
-            //     word = strtok(NULL, delim);
-            //     counter1++;
-            // }
-            *cmd1 = commandParser(word,cmd1,filedesc,p);
-            printf("%s  %s\n",cmd1[0],cmd1[1]);
-            printf("%s  %s\n",cmdParsed[0],cmdParsed[1]);
+            while (word != NULL)
+            {
+                strcat(nextCmd, word);
+                word = strtok(NULL, delim);
+                if (word != NULL) {
+                    strcat(nextCmd, " ");
+                }
+                //counter1++;
+            }
+            cmd1 = (char **)malloc(sizeof(char *) * strlen(nextCmd) + 1);
+            for (int j = 0; j < strlen(nextCmd) + 1; j++)
+            {
+                cmd1[j] = malloc(sizeof(char) * strlen(nextCmd) + 1);
+            }
+            int newFd = -1;  //new filedescriptor
+            *cmd1 = commandParser(nextCmd,cmd1,&newFd,p);
+            // printf("%s  %s\n",cmd1[0],cmd1[1]);
+            // printf("%s \n",nextCmd);
 
 
             int fds[2]; // file desc to open Pipe
-            pipe(fds);
+            if (pipe(fds) < 0) {
+                perror("pipe");
+                exit(EXIT_FAILURE);
+            }
+
             pid_t pid = fork();
             if (pid == -1){
                 perror("fork");
@@ -154,13 +169,12 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
                 dup2(fds[READ],0);
                 execvp(cmd1[0],cmd1);
                 perror("exec1");
-                //return -1;
+                exit(EXIT_FAILURE);
             }else{
-                close(fds[READ]);
                 dup2(fds[WRITE],1);
                 execvp(cmdParsed[0],cmdParsed);
                 perror("exec2");
-                //return -1;
+                exit(EXIT_FAILURE);
             }
 
 
@@ -176,16 +190,13 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
             word = strtok(NULL, delim);
             continue;
         }
-        // printf("1 \n");
         strcpy(cmdParsed[counter], word);
         word = strtok(NULL, delim);
-        // printf("%s  \n", word);
 
         counter++;
     }
 
     cmdParsed[counter] = NULL;
-    //printf("%s %s\n", cmdParsed[0], cmdParsed[1]);
 
     return *cmdParsed;
 }
