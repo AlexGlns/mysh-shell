@@ -19,7 +19,6 @@ void sig_handler_stop();
 int isChild = 0;
 int next = 0;
 
-
 int main()
 {
     pid_t pid;
@@ -46,17 +45,16 @@ int main()
         act_int is for control-c handling
         act_stp is for control-z handling
     */
-    static struct sigaction act_int , act_stp;
+    static struct sigaction act_int, act_stp;
 
     act_int.sa_handler = sig_handler_terminate;
     act_stp.sa_handler = sig_handler_stop;
-    
+
     sigemptyset(&(act_int.sa_mask));
     sigemptyset(&(act_stp.sa_mask));
 
-    sigaction(SIGINT, &act_int, NULL);      // control - c
-    sigaction(SIGTSTP, &act_stp, NULL);     // control - z
-
+    sigaction(SIGINT, &act_int, NULL);  // control - c
+    sigaction(SIGTSTP, &act_stp, NULL); // control - z
 
     while (1)
     {
@@ -77,29 +75,33 @@ int main()
             ch = getchar();
         }
         command[i] = '\0';
-        
+
         int history = 0;
-        char history_num[3];            //store number of command to execute from myHistory
-        
-        if (command[0] == '!'){         //check if you have to execute command from myHistory
+        char history_num[3]; // store number of command to execute from myHistory
+
+        if (command[0] == '!')
+        { // check if you have to execute command from myHistory
             int j = 1;
-            int k =0;
-            while (command[j] != '\0'){
-                if (strlen(command) > 3) {      //if command has more than 3 chars break and do nothing (for example !111)
+            int k = 0;
+            while (command[j] != '\0')
+            {
+                if (strlen(command) > 3)
+                { // if command has more than 3 chars break and do nothing (for example !111)
                     break;
                 }
                 history_num[k] = command[j];
                 j++;
                 k++;
-                if (k == 2) {               
+                if (k == 2)
+                {
                     break;
                 }
             }
             history_num[k] = '\0';
-            history = atoi(history_num);        //store num of command to execute from myHistory Array
+            history = atoi(history_num); // store num of command to execute from myHistory Array
         }
 
-        if (history > 0 && history <= 20)       //command to execute from myHistory [1,20]
+        if (history > 0 && history <= 20) // command to execute from myHistory [1,20]
         {
             strcpy(command, myHistory[history - 1]);
         }
@@ -113,13 +115,13 @@ int main()
                 break;
             }
 
-            if (i == 19)      //if Array is full
+            if (i == 19) // if Array is full
             {
-                for (int i = 1; i < 20; i++)    //go each element one posistion back
+                for (int i = 1; i < 20; i++) // go each element one posistion back
                 {
                     strcpy(myHistory[i - 1], myHistory[i]);
                 }
-                strcpy(myHistory[19], command); //store new command to last position of array
+                strcpy(myHistory[19], command); // store new command to last position of array
             }
         }
 
@@ -150,7 +152,7 @@ int main()
             char temp[LENGTH] = "";
             word = strtok(command, delim);
             word = strtok(NULL, delim);
-            add_alias(&alias, &aliases, &current_al, word);
+            add_alias(&alias, &aliases, &current_al, word); //add word to alias matrix
 
             word = strtok(NULL, delim);
             while (word != NULL)
@@ -159,7 +161,7 @@ int main()
                 strcat(temp, " ");
                 word = strtok(NULL, delim);
             }
-            add_alias(&alias, &aliases, &current_al, temp);
+            add_alias(&alias, &aliases, &current_al, temp); // add temp to alias matrix, temp is the command inside ""
             continue;
         }
 
@@ -189,6 +191,15 @@ int main()
 
         if (strcmp(command, "exit") == 0) // exit shell commnad
         {
+
+            // free alias array
+            for (int j = 0; j < aliases; j++)
+            {
+                free(alias[j]);
+            }
+
+            free(alias);
+            
             return 1;
         }
 
@@ -218,7 +229,6 @@ int main()
         {
             parsedCmd[j] = malloc(sizeof(char) * strlen(command) + 1);
         }
-        //*parsedCmd = commandParser(command, parsedCmd, &fd);
 
         if (pid == 0) // is child
         {
@@ -234,13 +244,16 @@ int main()
             exit(1);
         }
         else // parent process is mysh shell
-        { 
-            if (command[strlen(command) - 1] != '&') {                  // if last char of command is '&' don't wait to end
-                while (waitpid (-1 , &status , WNOHANG | WUNTRACED) == 0);
-            } else {
-               printf("\n");
+        {
+            if (command[strlen(command) - 1] != '&')
+            { // if last char of command is '&' don't wait to end
+                while (waitpid(-1, &status, WNOHANG | WUNTRACED) == 0)
+                    ;
             }
-            
+            else
+            {
+                printf("\n");
+            }
         }
 
         // free parsedStr
@@ -284,12 +297,13 @@ void sig_handler_terminate()
     printf("\n");
 }
 
-void sig_handler_stop() {
+void sig_handler_stop()
+{
     if (isChild == 1)
-    {   
+    {
         next = 1;
         isChild = 0;
-        kill(getpid() , SIGSTOP);
+        kill(getpid(), SIGSTOP);
     }
     printf("\n");
 }
