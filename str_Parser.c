@@ -164,6 +164,7 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
             if (pid == -1)
             {
                 perror("fork");
+                exit(EXIT_FAILURE);
             }
 
             if (pid == 0)
@@ -176,6 +177,7 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
             }
             else
             {
+                close(fds[READ]);
                 dup2(fds[WRITE], 1);
                 execvp(cmdParsed[0], cmdParsed);
                 perror("exec2");
@@ -231,4 +233,21 @@ char **wildchar(glob_t *gstruct, char *wd)
     }
 
     return NULL;
+}
+
+void exec_cd(char *cmd){
+    char delim[] =" ";
+    char *word;
+
+    word = strtok(cmd,delim);
+    word = strtok(NULL,delim);   // get arguments of cd
+    
+    if (word == NULL) {             // check if cd command has no arguments
+        word = getenv("HOME");     // then go to HOME directory
+    }
+
+    if(chdir(word) != 0) {
+        perror("mysh : cd ");
+    }
+
 }

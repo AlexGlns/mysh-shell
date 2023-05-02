@@ -17,7 +17,6 @@ void sig_handler_terminate();
 void sig_handler_stop();
 
 int isChild = 0;
-int next = 0;
 
 int main()
 {
@@ -215,6 +214,12 @@ int main()
             }
         }
 
+        // check for cd command
+        if (command[0] == 'c' && command[1] == 'd') {
+            exec_cd(command);
+            continue;
+        }
+
         pid = fork();
         if (pid == -1)
         {
@@ -301,7 +306,6 @@ void sig_handler_stop()
 {
     if (isChild == 1)
     {
-        next = 1;
         isChild = 0;
         kill(getpid(), SIGSTOP);
     }
