@@ -151,7 +151,7 @@ int main()
             char temp[LENGTH] = "";
             word = strtok(command, delim);
             word = strtok(NULL, delim);
-            add_alias(&alias, &aliases, &current_al, word); //add word to alias matrix
+            add_alias(&alias, &aliases, &current_al, word); // add word to alias matrix
 
             word = strtok(NULL, delim);
             while (word != NULL)
@@ -198,7 +198,7 @@ int main()
             }
 
             free(alias);
-            
+
             return 1;
         }
 
@@ -215,7 +215,9 @@ int main()
         }
 
         // check for cd command
-        if (command[0] == 'c' && command[1] == 'd') {
+        if (command[0] == 'c' && command[1] == 'd' &&
+            (command[2] == '\0' || command[2] == ' '))
+        {
             exec_cd(command);
             continue;
         }

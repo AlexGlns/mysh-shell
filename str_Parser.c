@@ -5,12 +5,13 @@
 #include <sys/types.h>
 #include <string.h>
 #include <glob.h>
+#include <limits.h>
 #include "str_Parser.h"
-#define READ 0      // read end for read
-#define WRITE 1     // write end for pipe
-#define PERMS 0644  // set access permissions
+#define READ 0     // read end for read
+#define WRITE 1    // write end for pipe
+#define PERMS 0644 // set access permissions
 
-char ** wildchar(glob_t *, char* );
+char **wildchar(glob_t *, char *);
 
 char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
 {
@@ -24,8 +25,8 @@ char *commandParser(char *cmd, char **cmdParsed, int *filedesc, int *p)
     while (word != NULL)
     {
         char tmp;
-        int j = 0, wdchar = 0; // wdchar == 1 if wildcharachter found
-        while (word[j] != '\0')     // check for wildchar inside word
+        int j = 0, wdchar = 0;  // wdchar == 1 if wildcharachter found
+        while (word[j] != '\0') // check for wildchar inside word
         {
             if (word[j] == '*')
             { // if you find a wild char call function wildchar
@@ -229,25 +230,36 @@ char **wildchar(glob_t *gstruct, char *wd)
 
     if (r == 0)
     {
-        return gstruct->gl_pathv;       //return files found with those wild chars
+        return gstruct->gl_pathv; // return files found with those wild chars
     }
 
     return NULL;
 }
 
-void exec_cd(char *cmd){
-    char delim[] =" ";
+void exec_cd(char *cmd)
+{
+    char delim[] = " ";
+    char cwd[512];
     char *word;
 
-    word = strtok(cmd,delim);
-    word = strtok(NULL,delim);   // get arguments of cd
-    
-    if (word == NULL) {             // check if cd command has no arguments
-        word = getenv("HOME");     // then go to HOME directory
+    word = strtok(cmd, delim);
+    word = strtok(NULL, delim); // get arguments of cd
+
+    if (word == NULL)
+    {                          // check if cd command has no arguments
+        word = getenv("HOME"); // then go to HOME directory
     }
 
-    if(chdir(word) != 0) {
+    if (chdir(word) != 0)
+    {
         perror("mysh : cd ");
     }
-
+    else
+    {
+        if (getcwd(cwd, sizeof(cwd)) != NULL) {
+            printf("%s \n", cwd);
+        }else{
+            perror("getcwd() :");
+        }
+    }
 }
