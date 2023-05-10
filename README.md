@@ -33,8 +33,15 @@ My shell supports also wild characters. For example : <br />
 
 ## Aliases
 Supports create and delete aliases with command `createalias` and `destroyalias`. For example : <br />
-`in-mysh-now:> createalias ls “ls -l” <br />
+`in-mysh-now:> createalias ls “ls -l”` <br />
 `in-mysh-now:> destroyalias ls`
+
+## Signals
+mysh-shell manages contol-C and constrol-Z signals. control-C and control-Z work for running processes <br />
+and not for mysh-prompt.
+
+## Store History
+With `myHistory` command shell prints last 20 commands typed.With `!3` also for example you can execute command with number 3. 
 
 
 
